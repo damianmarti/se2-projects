@@ -20,7 +20,10 @@
     "vercel": "yarn workspace @se-2/nextjs vercel",
     "vercel:yolo": "yarn workspace @se-2/nextjs vercel:yolo",
     "vercel:login": "yarn workspace @se-2/nextjs vercel:login",
-    "ipfs": "yarn workspace @se-2/nextjs ipfs"
+    "ipfs": "yarn workspace @se-2/nextjs ipfs",
+    "scripts:scrape": "yarn workspace @se-2/scripts scrape",
+    "scripts:dependents-api": "yarn workspace @se-2/scripts dependents-api",
+    "scripts:search-filename": "yarn workspace @se-2/scripts search-filename"
   },
   "packageManager": "yarn@3.2.3",
   "devDependencies": {

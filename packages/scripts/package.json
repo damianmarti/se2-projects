@@ -1,0 +1,26 @@
+{
+  "name": "@se-2/scripts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "scrape-dependents.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "scrape": "tsx src/scrape-dependents.js",
+    "dependents-api": "tsx src/fetch-dependents-api.ts",
+    "dependents-gql": "tsx src/fetch-dependents-graphql.ts",
+    "search-filename": "tsx src/search-by-filename.ts"
+  },
+  "kenwords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@octokit/graphql": "^8.1.1",
+    "dotenv": "^16.4.5",
+    "puppeteer": "^24.12.1",
+    "typescript": "^5.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.26",
+    "tsx": "^4.7.1"
+  }
+}
