@@ -109,7 +109,7 @@ const Home: NextPage = () => {
                           <th>Repository</th>
                           <th>Stars</th>
                           <th>Forks</th>
-                          <th>Source</th>
+                          <th className="w-48">Source</th>
                         </tr>
                       </thead>
                       <tbody>

@@ -56,6 +56,7 @@ const RepositoriesPage = () => {
 
   useEffect(() => {
     fetchRepositories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, sortBy, sortOrder, search]);
 
   const handleSort = (field: string) => {
