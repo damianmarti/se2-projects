@@ -1,10 +1,24 @@
-const puppeteer = require('puppeteer');
-const fs = require('fs');
+/*
+  Scrape repositories that depend on scaffold-eth/burner-connector using Puppeteer
+  and save the data to PostgreSQL database.
+*/
+
+import puppeteer from 'puppeteer';
+import {
+  delay,
+  fetchRepoMeta,
+  pool,
+  processRepositories,
+  setupGracefulShutdown,
+  type RepositoryData
+} from './common';
 
 const BASE_URL = 'https://github.com/scaffold-eth/burner-connector/network/dependents?dependent_type=REPOSITORY';
 
 (async () => {
-    const browser = await puppeteer.launch({ headless: true }); // Keep headless: false for debugging!
+    setupGracefulShutdown();
+
+    const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
 
     // Set a higher default timeout for all Puppeteer operations on this page
@@ -33,47 +47,37 @@ const BASE_URL = 'https://github.com/scaffold-eth/burner-connector/network/depen
         }
 
         // Scrape current page
-        const repos = await page.$$eval('.Box-row', rows => {
-            const getCount = (span) => {
-                if (!span) return 0;
-                for (const node of span.childNodes) {
-                    if (node.nodeType === Node.TEXT_NODE) {
-                        const num = parseInt(node.textContent.replace(/,/g, '').trim(), 10);
-                        if (!isNaN(num)) return num;
+        const repos: string[] = await page.evaluate(`
+            (() => {
+                const rows = document.querySelectorAll('.Box-row');
+                const getCount = (span) => {
+                    if (!span) return 0;
+                    for (const node of span.childNodes) {
+                        if (node.nodeType === Node.TEXT_NODE) {
+                            const num = parseInt(node.textContent.replace(/,/g, '').trim(), 10);
+                            if (!isNaN(num)) return num;
+                        }
                     }
-                }
-                return 0;
-            };
-
-            return rows.map(row => {
-                const repoLink = row.querySelector('a[data-hovercard-type="repository"]');
-                const ownerLink = row.querySelector('a[data-hovercard-type="user"]') || row.querySelector('a[data-hovercard-type="organization"]');
-                const starsSpan = row.querySelector('svg.octicon-star')?.parentElement;
-                const forksSpan = row.querySelector('svg.octicon-repo-forked')?.parentElement;
-
-                const name = repoLink?.innerText.trim();
-                const owner = ownerLink?.innerText.trim();
-                const url = repoLink?.href;
-
-                const stars = getCount(starsSpan);
-                const forks = getCount(forksSpan);
-
-                return {
-                    full_name: owner && name ? `${owner}/${name}` : name,
-                    name: name,
-                    owner: owner,
-                    url: url,
-                    stars: stars,
-                    forks: forks
+                    return 0;
                 };
-            });
-        });
 
-        results.push(...repos);
+                return Array.from(rows).map(row => {
+                    const repoLink = row.querySelector('a[data-hovercard-type="repository"]');
+                    const ownerLink = row.querySelector('a[data-hovercard-type="user"]') || row.querySelector('a[data-hovercard-type="organization"]');
+
+                    const name = repoLink?.textContent?.trim();
+                    const owner = ownerLink?.textContent?.trim();
+
+                    return owner && name ? owner + '/' + name : name;
+                });
+            })()
+        `) as string[];
+
+        results.push(...(repos as string[]));
         console.log(`Scraped page ${pageNum}, repos on this page: ${repos.length}, total collected: ${results.length}`);
         if (repos.length > 0) {
-            console.log(`First repo on this page: ${repos[0].full_name}`);
-            console.log(`Last repo on this page: ${repos[repos.length - 1].full_name}`);
+            console.log(`First repo on this page: ${repos[0]}`);
+            console.log(`Last repo on this page: ${repos[repos.length - 1]}`);
         } else {
             console.log('No repos found on this page.');
         }
@@ -85,11 +89,11 @@ const BASE_URL = 'https://github.com/scaffold-eth/burner-connector/network/depen
         const nextHref = await page.evaluate(() => {
             const byRel = document.querySelector('a[rel="next"]');
             if (byRel && !(byRel.classList && byRel.classList.contains('disabled'))) {
-                return byRel.href;
+                return byRel.getAttribute('href');
             }
             const candidates = Array.from(document.querySelectorAll('a.BtnGroup-item, a.next_page'));
             const nextBtn = candidates.find(btn => btn.textContent && btn.textContent.trim().toLowerCase().startsWith('next') && !btn.classList.contains('disabled'));
-            return nextBtn ? nextBtn.href : null;
+            return nextBtn ? nextBtn.getAttribute('href') : null;
         });
 
         if (nextHref) {
@@ -109,16 +113,34 @@ const BASE_URL = 'https://github.com/scaffold-eth/burner-connector/network/depen
     }
 
     // Remove duplicates
-    const uniqueResults = Array.from(new Map(results.map(r => [r.url, r])).values());
+    const uniqueResults = Array.from(new Set(results));
 
-    // Save to CSV
-    const csvContent = [
-        'full_name,name,owner,url,stars,forks',
-        ...uniqueResults.map(r => `"${r.full_name || r.name}","${r.name || ''}","${r.owner || ''}","${r.url || ''}",${r.stars || 0},${r.forks || 0}`)
-    ].join('\n');
+    // Enrich repositories sequentially
+    const enriched: RepositoryData[] = [];
+    for (let i = 0; i < uniqueResults.length; i++) {
+      const full = uniqueResults[i];
+      console.log(`Processing ${full} (${i + 1} of ${uniqueResults.length})`);
+      const meta = await fetchRepoMeta(full);
+      if (meta) {
+        enriched.push({
+          full_name: meta.full_name,
+          name: meta.name,
+          owner: meta.owner.login,
+          url: meta.html_url,
+          homepage: meta.homepage,
+          stars: meta.stargazers_count,
+          forks: meta.forks_count,
+          created_at: meta.created_at,
+          updated_at: meta.updated_at,
+          source: 'scrape-dependents',
+        });
+      }
+      // Pace between calls to reduce abuse detection
+      await delay(800);
+    }
 
-    fs.writeFileSync('dependents.csv', csvContent);
-    console.log(`Saved ${uniqueResults.length} unique dependents to dependents.csv`);
+    await processRepositories(enriched);
 
+    await pool.end();
     await browser.close();
 })();

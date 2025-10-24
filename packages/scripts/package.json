@@ -5,7 +5,7 @@
   "main": "scrape-dependents.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "scrape": "tsx src/scrape-dependents.js",
+    "scrape": "tsx src/scrape-dependents.ts",
     "dependents-api": "tsx src/fetch-dependents-api.ts",
     "dependents-gql": "tsx src/fetch-dependents-graphql.ts",
     "search-filename": "tsx src/search-by-filename.ts"
@@ -16,11 +16,13 @@
   "dependencies": {
     "@octokit/graphql": "^8.1.1",
     "dotenv": "^16.4.5",
+    "pg": "^8.11.3",
     "puppeteer": "^24.12.1",
     "typescript": "^5.4.2"
   },
   "devDependencies": {
     "@types/node": "^20.11.26",
+    "@types/pg": "^8.10.9",
     "tsx": "^4.7.1"
   }
 }

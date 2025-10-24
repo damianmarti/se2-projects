@@ -12,16 +12,18 @@
     - INCLUDE_FORKS (optional): "true" to include forks
 */
 
-import fs from 'fs';
 import dotenv from 'dotenv';
+import {
+  pool,
+  githubHeaders,
+  delay,
+  fetchRepoMeta,
+  processRepositories,
+  setupGracefulShutdown,
+  type RepositoryData,
+} from './common';
 
 dotenv.config();
-
-const token = process.env.GITHUB_TOKEN;
-if (!token) {
-  console.error('GITHUB_TOKEN is required. Set it in your .env');
-  process.exit(1);
-}
 
 const FILENAME = process.env.FILENAME || 'scaffold.config.ts';
 const includeForks = String(process.env.INCLUDE_FORKS || 'false').toLowerCase() === 'true';
@@ -35,29 +37,9 @@ const sizeShards = (process.env.SIZE_SHARDS || '0..4096,4097..16384,16385..65536
   .map(s => s.trim())
   .filter(Boolean);
 
-const headers: Record<string, string> = {
-  Authorization: `token ${token}`,
-  Accept: 'application/vnd.github.v3+json',
-  'User-Agent': 'filename-search-script',
-};
-
-async function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-let globalResumeAtMs = 0;
-async function ensureGlobalResumeWindow(): Promise<void> {
-  const now = Date.now();
-  if (now < globalResumeAtMs) {
-    const waitMs = globalResumeAtMs - now;
-    console.warn(`Global backoff active. Waiting ${waitMs}ms...`);
-    await delay(waitMs);
-  }
-}
-
 async function searchCode(q: string, page: number): Promise<any> {
   const url = `https://api.github.com/search/code?q=${encodeURIComponent(q)}&per_page=100&page=${page}`;
-  const res = await fetch(url, { headers });
+  const res = await fetch(url, { headers: githubHeaders });
   if (res.status === 403) {
     const reset = res.headers.get('x-ratelimit-reset');
     const nowSec = Math.floor(Date.now() / 1000);
@@ -73,32 +55,9 @@ async function searchCode(q: string, page: number): Promise<any> {
   return res.json();
 }
 
-async function fetchRepo(fullName: string): Promise<any | null> {
-  await ensureGlobalResumeWindow();
-  const url = `https://api.github.com/repos/${fullName}`;
-  const res = await fetch(url, { headers });
-  if (res.status === 403) {
-    const reset = res.headers.get('x-ratelimit-reset');
-    const nowSec = Math.floor(Date.now() / 1000);
-    const waitMs = Math.max(reset ? (parseInt(reset, 10) - nowSec + 2) * 1000 : 30_000, 5000);
-    globalResumeAtMs = Date.now() + waitMs;
-    console.warn(`Rate limited on repo ${fullName}. Global wait ${waitMs}ms until reset...`);
-    await ensureGlobalResumeWindow();
-    const retry = await fetch(url, { headers });
-    if (!retry.ok) return null;
-    return retry.json();
-  }
-  if (!res.ok) return null;
-  return res.json();
-}
-
-function toCsvValue(val: string | number): string {
-  if (typeof val === 'number') return String(val);
-  const escaped = (val || '').replace(/"/g, '""');
-  return `"${escaped}"`;
-}
-
 async function main() {
+  setupGracefulShutdown();
+
   console.log(`Searching for filename:${FILENAME} across path and size shards...`);
   const repos = new Set<string>();
 
@@ -106,10 +65,14 @@ async function main() {
   const shards = [''].concat(pathShards.map(p => `path:${p}`));
   const forkQualifier = includeForks ? 'fork:true' : '';
 
+  const totalCombinations = shards.length * sizeShards.length;
+  let currentCombination = 0;
+
   for (const shard of shards) {
     for (const size of sizeShards) {
+      currentCombination++;
       const base = [`filename:${FILENAME}`, shard, `size:${size}`, forkQualifier].filter(Boolean).join(' ');
-      console.log(`Searching: ${base}`);
+      console.log(`Searching: ${base} (${currentCombination} of ${totalCombinations})`);
       for (let page = 1; page <= 10; page++) {
         const data = await searchCode(base, page);
         const items = Array.isArray(data.items) ? data.items : [];
@@ -133,50 +96,33 @@ async function main() {
   const list = Array.from(repos);
   console.log(`Found ${list.length} unique repositories.`);
 
-  // Enrich with conservative concurrency and pacing
-  const concurrency = 3;
-  const queue: Array<Promise<any>> = [];
-  const enriched: any[] = new Array(list.length);
-  let nextIndex = 0;
-  async function worker(workerId: number) {
-    while (true) {
-      const idx = nextIndex++;
-      if (idx >= list.length) break;
-      const full = list[idx];
-      const meta = await fetchRepo(full);
-      if (meta) {
-        enriched[idx] = {
-          full_name: meta.full_name,
-          name: meta.name,
-          owner: meta.owner?.login,
-          url: meta.html_url,
-          stars: meta.stargazers_count,
-          forks: meta.forks_count,
-        };
-      }
-      // Pace between calls to reduce abuse detection
-      await delay(800);
+  // Enrich repositories sequentially
+  const enriched: RepositoryData[] = [];
+  for (let i = 0; i < list.length; i++) {
+    const full = list[i];
+    console.log(`Processing ${full} (${i + 1} of ${list.length})`);
+    const meta = await fetchRepoMeta(full);
+    if (meta) {
+      enriched.push({
+        full_name: meta.full_name,
+        name: meta.name,
+        owner: meta.owner.login,
+        url: meta.html_url,
+        homepage: meta.homepage,
+        stars: meta.stargazers_count,
+        forks: meta.forks_count,
+        created_at: meta.created_at,
+        updated_at: meta.updated_at,
+        source: 'filename-search',
+      });
     }
+    // Pace between calls to reduce abuse detection
+    await delay(800);
   }
-  for (let i = 0; i < concurrency; i++) queue.push(worker(i));
-  await Promise.all(queue);
 
-  const filtered = enriched.filter(Boolean);
-  const csv = [
-    'full_name,name,owner,url,stars,forks',
-    ...filtered.map(r => [
-      toCsvValue(r.full_name),
-      toCsvValue(r.name),
-      toCsvValue(r.owner),
-      toCsvValue(r.url),
-      String(r.stars),
-      String(r.forks),
-    ].join(',')),
-  ].join('\n');
+  await processRepositories(enriched);
 
-  const out = 'filename_search.csv';
-  fs.writeFileSync(out, csv);
-  console.log(`Saved ${filtered.length} repositories to ${out}`);
+  await pool.end();
 }
 
 main().catch(err => {
