@@ -11,7 +11,7 @@ export interface Repository {
   updated_at: string;
   last_seen: string;
   saved_at: string;
-  source: string;
+  source: string[];
 }
 
 export interface RepositoryStats {
@@ -27,7 +27,7 @@ export interface RepositoryStats {
     stars: number;
     forks: number;
     url: string;
-    source: string;
+    source: string[];
   }>;
   recentRepos: number;
   totals: {

@@ -16,9 +16,9 @@ export async function GET() {
 
       // Get repositories by source
       const sourceStatsResult = await client.query(`
-        SELECT source, COUNT(*) as count
+        SELECT unnest(source) as source, COUNT(*) as count
         FROM repositories
-        GROUP BY source
+        GROUP BY unnest(source)
         ORDER BY count DESC
       `);
       const sourceStats = sourceStatsResult.rows;

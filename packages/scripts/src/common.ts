@@ -45,7 +45,7 @@ export interface RepositoryData {
   forks: number;
   created_at: string;
   updated_at: string;
-  source: string;
+  source: string[];
 }
 
 export interface GitHubRepoResponse {
@@ -77,6 +77,7 @@ export async function upsertRepository(repo: RepositoryData): Promise<void> {
       forks = EXCLUDED.forks,
       updated_at = EXCLUDED.updated_at,
       homepage = EXCLUDED.homepage,
+      source = ARRAY(SELECT DISTINCT unnest(repositories.source || EXCLUDED.source)),
       last_seen = NOW()
   `;
 

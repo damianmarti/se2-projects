@@ -113,7 +113,7 @@ async function main() {
         forks: meta.forks_count,
         created_at: meta.created_at,
         updated_at: meta.updated_at,
-        source: 'filename-search',
+        source: ['filename-search'],
       });
     }
     // Pace between calls to reduce abuse detection

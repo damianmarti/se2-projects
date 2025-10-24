@@ -149,7 +149,7 @@ async function main() {
       forks: m.forks_count,
       created_at: m.created_at,
       updated_at: m.updated_at,
-      source: 'dependents-api',
+      source: ['dependents-api'],
     }));
 
   await processRepositories(rows);

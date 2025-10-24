@@ -132,7 +132,7 @@ const BASE_URL = 'https://github.com/scaffold-eth/burner-connector/network/depen
           forks: meta.forks_count,
           created_at: meta.created_at,
           updated_at: meta.updated_at,
-          source: 'scrape-dependents',
+          source: ['scrape-dependents'],
         });
       }
       // Pace between calls to reduce abuse detection

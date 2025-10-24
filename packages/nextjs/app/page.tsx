@@ -127,7 +127,11 @@ const Home: NextPage = () => {
                             <td>{repo.stars.toLocaleString()}</td>
                             <td>{repo.forks.toLocaleString()}</td>
                             <td>
-                              <div className="badge badge-outline">{repo.source}</div>
+                              {repo.source.map((src, index) => (
+                                <div key={index} className="badge badge-accent badge-sm">
+                                  {src}
+                                </div>
+                              ))}
                             </td>
                           </tr>
                         ))}

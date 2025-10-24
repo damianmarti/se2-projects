@@ -11,7 +11,7 @@ CREATE TABLE repositories (
     updated_at TIMESTAMP WITH TIME ZONE,
     last_seen TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    source VARCHAR(255)
+    source VARCHAR(255)[]
 );
 
 CREATE INDEX idx_repositories_owner ON repositories(owner);

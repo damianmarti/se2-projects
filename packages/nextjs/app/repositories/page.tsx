@@ -236,7 +236,13 @@ const RepositoriesPage = () => {
                       <div className="badge badge-primary badge-outline">{repo.forks.toLocaleString()}</div>
                     </td>
                     <td>
-                      <div className="badge badge-accent">{repo.source}</div>
+                      <div className="flex flex-wrap gap-1">
+                        {repo.source.map((src, index) => (
+                          <div key={index} className="badge badge-accent badge-sm">
+                            {src}
+                          </div>
+                        ))}
+                      </div>
                     </td>
                     <td>
                       {repo.homepage ? (
