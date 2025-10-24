@@ -5,15 +5,15 @@
   that are used across multiple scripts.
 */
 
-import dotenv from 'dotenv';
-import { Pool } from 'pg';
+import dotenv from "dotenv";
+import { Pool } from "pg";
 
 dotenv.config();
 
 // Database configuration
 const postgresUrl = process.env.POSTGRES_URL;
 if (!postgresUrl) {
-  console.error('POSTGRES_URL is required. Set it in your environment.');
+  console.error("POSTGRES_URL is required. Set it in your environment.");
   process.exit(1);
 }
 
@@ -24,14 +24,14 @@ export const pool = new Pool({
 // GitHub API configuration
 const githubToken = process.env.GITHUB_TOKEN;
 if (!githubToken) {
-  console.error('GITHUB_TOKEN is required. Set it in your environment.');
+  console.error("GITHUB_TOKEN is required. Set it in your environment.");
   process.exit(1);
 }
 
 export const githubHeaders: Record<string, string> = {
   Authorization: `token ${githubToken}`,
-  Accept: 'application/vnd.github.v3+json',
-  'User-Agent': 'scaffold-eth-dependents-scripts',
+  Accept: "application/vnd.github.v3+json",
+  "User-Agent": "scaffold-eth-dependents-scripts",
 };
 
 // Common types
@@ -63,7 +63,7 @@ export interface GitHubRepoResponse {
 
 // Utility functions
 export async function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // Database functions
@@ -98,16 +98,23 @@ export async function upsertRepository(repo: RepositoryData): Promise<void> {
 }
 
 // GitHub API functions
-export async function fetchRepoMeta(fullName: string): Promise<GitHubRepoResponse | null> {
+export async function fetchRepoMeta(
+  fullName: string
+): Promise<GitHubRepoResponse | null> {
   const url = `https://api.github.com/repos/${fullName}`;
   const res = await fetch(url, { headers: githubHeaders });
 
   if (res.status === 403) {
     // Rate limit - back off
-    const reset = res.headers.get('x-ratelimit-reset');
+    const reset = res.headers.get("x-ratelimit-reset");
     const nowSec = Math.floor(Date.now() / 1000);
     const waitMs = reset ? (parseInt(reset, 10) - nowSec + 2) * 1000 : 30_000;
-    console.warn(`Rate limited on repo meta (${fullName}). Waiting ${Math.max(waitMs, 5000)}ms...`);
+    console.warn(
+      `Rate limited on repo meta (${fullName}). Waiting ${Math.max(
+        waitMs,
+        5000
+      )}ms...`
+    );
     await delay(Math.max(waitMs, 5000));
     return fetchRepoMeta(fullName);
   }
@@ -120,10 +127,9 @@ export async function fetchRepoMeta(fullName: string): Promise<GitHubRepoRespons
   return res.json();
 }
 
-
 // Helper function to process repositories and save to database
 export async function processRepositories(
-  repositories: RepositoryData[],
+  repositories: RepositoryData[]
 ): Promise<{ savedCount: number; updatedCount: number }> {
   console.log(`Saving ${repositories.length} repositories to database...`);
 
@@ -137,7 +143,7 @@ export async function processRepositories(
     try {
       // Check if repository already exists
       const existingRepo = await pool.query(
-        'SELECT full_name FROM repositories WHERE full_name = $1',
+        "SELECT full_name FROM repositories WHERE full_name = $1",
         [repo.full_name]
       );
 
@@ -149,27 +155,36 @@ export async function processRepositories(
         savedCount++;
       }
 
-      console.log(`${progress} Processed: ${repo.full_name} (${existingRepo.rows.length > 0 ? 'updated' : 'saved'})`);
+      console.log(
+        `${progress} Processed: ${repo.full_name} (${
+          existingRepo.rows.length > 0 ? "updated" : "saved"
+        })`
+      );
     } catch (error) {
-      console.error(`${progress} Error saving repository ${repo.full_name}:`, error);
+      console.error(
+        `${progress} Error saving repository ${repo.full_name}:`,
+        error
+      );
     }
   }
 
-  console.log(`Database operation completed: ${savedCount} new repositories saved, ${updatedCount} repositories updated`);
+  console.log(
+    `Database operation completed: ${savedCount} new repositories saved, ${updatedCount} repositories updated`
+  );
 
   return { savedCount, updatedCount };
 }
 
 // Graceful shutdown handler
 export function setupGracefulShutdown(): void {
-  process.on('SIGINT', async () => {
-    console.log('\nReceived SIGINT, shutting down gracefully...');
+  process.on("SIGINT", async () => {
+    console.log("\nReceived SIGINT, shutting down gracefully...");
     await pool.end();
     process.exit(0);
   });
 
-  process.on('SIGTERM', async () => {
-    console.log('\nReceived SIGTERM, shutting down gracefully...');
+  process.on("SIGTERM", async () => {
+    console.log("\nReceived SIGTERM, shutting down gracefully...");
     await pool.end();
     process.exit(0);
   });

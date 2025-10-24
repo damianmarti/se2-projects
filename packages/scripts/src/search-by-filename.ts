@@ -12,7 +12,7 @@
     - INCLUDE_FORKS (optional): "true" to include forks
 */
 
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 import {
   pool,
   githubHeaders,
@@ -21,27 +21,35 @@ import {
   processRepositories,
   setupGracefulShutdown,
   type RepositoryData,
-} from './common';
+} from "./common";
 
 dotenv.config();
 
-const FILENAME = process.env.FILENAME || 'scaffold.config.ts';
-const includeForks = String(process.env.INCLUDE_FORKS || 'false').toLowerCase() === 'true';
-const pathShards = (process.env.PATH_SHARDS || '/nextjs/,/packages/nextjs/,/apps/nextjs/,/examples/nextjs/,/libs/nextjs/,/modules/nextjs/,/services/nextjs/')
-  .split(',')
-  .map(s => s.trim())
+const FILENAME = process.env.FILENAME || "scaffold.config.ts";
+const includeForks =
+  String(process.env.INCLUDE_FORKS || "false").toLowerCase() === "true";
+const pathShards = (
+  process.env.PATH_SHARDS ||
+  "/nextjs/,/packages/nextjs/,/apps/nextjs/,/examples/nextjs/,/libs/nextjs/,/modules/nextjs/,/services/nextjs/"
+)
+  .split(",")
+  .map((s) => s.trim())
   .filter(Boolean);
-const requiredPath = (process.env.REQUIRED_PATH || '/nextjs/').toLowerCase();
-const sizeShards = (process.env.SIZE_SHARDS || '0..4096,4097..16384,16385..65536,>65536')
-  .split(',')
-  .map(s => s.trim())
+const requiredPath = (process.env.REQUIRED_PATH || "/nextjs/").toLowerCase();
+const sizeShards = (
+  process.env.SIZE_SHARDS || "0..4096,4097..16384,16385..65536,>65536"
+)
+  .split(",")
+  .map((s) => s.trim())
   .filter(Boolean);
 
 async function searchCode(q: string, page: number): Promise<any> {
-  const url = `https://api.github.com/search/code?q=${encodeURIComponent(q)}&per_page=100&page=${page}`;
+  const url = `https://api.github.com/search/code?q=${encodeURIComponent(
+    q
+  )}&per_page=100&page=${page}`;
   const res = await fetch(url, { headers: githubHeaders });
   if (res.status === 403) {
-    const reset = res.headers.get('x-ratelimit-reset');
+    const reset = res.headers.get("x-ratelimit-reset");
     const nowSec = Math.floor(Date.now() / 1000);
     const waitMs = reset ? (parseInt(reset, 10) - nowSec + 2) * 1000 : 30_000;
     console.warn(`Rate limited. Waiting ${Math.max(waitMs, 5000)}ms...`);
@@ -58,12 +66,14 @@ async function searchCode(q: string, page: number): Promise<any> {
 async function main() {
   setupGracefulShutdown();
 
-  console.log(`Searching for filename:${FILENAME} across path and size shards...`);
+  console.log(
+    `Searching for filename:${FILENAME} across path and size shards...`
+  );
   const repos = new Set<string>();
 
   // Always run a generic filename search (no path) as well
-  const shards = [''].concat(pathShards.map(p => `path:${p}`));
-  const forkQualifier = includeForks ? 'fork:true' : '';
+  const shards = [""].concat(pathShards.map((p) => `path:${p}`));
+  const forkQualifier = includeForks ? "fork:true" : "";
 
   const totalCombinations = shards.length * sizeShards.length;
   let currentCombination = 0;
@@ -71,8 +81,17 @@ async function main() {
   for (const shard of shards) {
     for (const size of sizeShards) {
       currentCombination++;
-      const base = [`filename:${FILENAME}`, shard, `size:${size}`, forkQualifier].filter(Boolean).join(' ');
-      console.log(`Searching: ${base} (${currentCombination} of ${totalCombinations})`);
+      const base = [
+        `filename:${FILENAME}`,
+        shard,
+        `size:${size}`,
+        forkQualifier,
+      ]
+        .filter(Boolean)
+        .join(" ");
+      console.log(
+        `Searching: ${base} (${currentCombination} of ${totalCombinations})`
+      );
       for (let page = 1; page <= 10; page++) {
         const data = await searchCode(base, page);
         const items = Array.isArray(data.items) ? data.items : [];
@@ -82,7 +101,10 @@ async function main() {
           const repo = it.repository?.full_name;
           const path: string | undefined = it.path;
           // Enforce requiredPath if provided
-          const passesRequired = !requiredPath || (path && path.toLowerCase().includes(requiredPath.replace(/^\//, '')));
+          const passesRequired =
+            !requiredPath ||
+            (path &&
+              path.toLowerCase().includes(requiredPath.replace(/^\//, "")));
           if (repo && passesRequired) {
             repos.add(repo);
           }
@@ -113,7 +135,7 @@ async function main() {
         forks: meta.forks_count,
         created_at: meta.created_at,
         updated_at: meta.updated_at,
-        source: ['filename-search'],
+        source: ["filename-search"],
       });
     }
     // Pace between calls to reduce abuse detection
@@ -125,7 +147,7 @@ async function main() {
   await pool.end();
 }
 
-main().catch(err => {
-  console.error('Unhandled error:', err);
+main().catch((err) => {
+  console.error("Unhandled error:", err);
   process.exit(1);
 });
