@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon, ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Repository } from "~~/types/repository";
 
 interface RepositoriesResponse {
@@ -74,6 +74,27 @@ const RepositoriesPage = () => {
     setCurrentPage(1);
   };
 
+  const handleExport = async () => {
+    try {
+      const response = await fetch("/api/repositories/export");
+      if (!response.ok) {
+        throw new Error("Failed to export repositories");
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `repositories-${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error("Export error:", err);
+      alert("Failed to export repositories. Please try again.");
+    }
+  };
+
   const SortIcon = ({ field }: { field: string }) => {
     if (sortBy !== field) return null;
     return sortOrder === "asc" ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />;
@@ -100,7 +121,13 @@ const RepositoriesPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4">All Repositories</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <h1 className="text-3xl font-bold">All Repositories</h1>
+          <button className="btn btn-primary btn-sm" onClick={handleExport}>
+            <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
+            Export to CSV
+          </button>
+        </div>
 
         {/* Search */}
         <div className="form-control max-w-md">
