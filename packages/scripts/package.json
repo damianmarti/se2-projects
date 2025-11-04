@@ -8,13 +8,15 @@
     "scrape": "tsx src/scrape-dependents.ts",
     "dependents-api": "tsx src/fetch-dependents-api.ts",
     "dependents-gql": "tsx src/fetch-dependents-graphql.ts",
-    "search-filename": "tsx src/search-by-filename.ts"
+    "search-filename": "tsx src/search-by-filename.ts",
+    "import-csv": "tsx src/import-se2builds-csv.ts"
   },
   "kenwords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@octokit/graphql": "^8.1.1",
+    "csv-parser": "^3.2.0",
     "dotenv": "^16.4.5",
     "pg": "^8.11.3",
     "puppeteer": "^24.12.1",

@@ -23,7 +23,8 @@
     "ipfs": "yarn workspace @se-2/nextjs ipfs",
     "scripts:scrape": "yarn workspace @se-2/scripts scrape",
     "scripts:dependents-api": "yarn workspace @se-2/scripts dependents-api",
-    "scripts:search-filename": "yarn workspace @se-2/scripts search-filename"
+    "scripts:search-filename": "yarn workspace @se-2/scripts search-filename",
+    "scripts:import-csv": "yarn workspace @se-2/scripts import-csv"
   },
   "packageManager": "yarn@3.2.3",
   "devDependencies": {
