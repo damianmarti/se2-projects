@@ -200,15 +200,6 @@ const RepositoriesPage = () => {
                       <SortIcon field="forks" />
                     </button>
                   </th>
-                  <th>
-                    <button
-                      className="btn btn-ghost btn-sm flex items-center gap-2"
-                      onClick={() => handleSort("source")}
-                    >
-                      Source
-                      <SortIcon field="source" />
-                    </button>
-                  </th>
                   <th>Homepage</th>
                   <th>
                     <button
@@ -262,15 +253,6 @@ const RepositoriesPage = () => {
                     </td>
                     <td>
                       <div className="badge badge-primary badge-outline">{repo.forks.toLocaleString()}</div>
-                    </td>
-                    <td>
-                      <div className="flex flex-wrap gap-1">
-                        {repo.source.map((src, index) => (
-                          <div key={index} className="badge badge-accent badge-sm">
-                            {src}
-                          </div>
-                        ))}
-                      </div>
                     </td>
                     <td>
                       {repo.homepage ? (

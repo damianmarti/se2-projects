@@ -109,13 +109,12 @@ const Home: NextPage = () => {
                           <th>Repository</th>
                           <th>Stars</th>
                           <th>Forks</th>
-                          <th className="w-48">Source</th>
                         </tr>
                       </thead>
                       <tbody>
                         {stats.topStars.map((repo, index) => (
-                          <tr key={repo.full_name}>
-                            <td>
+                          <tr key={repo.full_name} className="h-16">
+                            <td className="py-2">
                               <div className="flex items-center space-x-3">
                                 <div className="font-bold">{index + 1}</div>
                                 <div>
@@ -126,13 +125,6 @@ const Home: NextPage = () => {
                             </td>
                             <td>{repo.stars.toLocaleString()}</td>
                             <td>{repo.forks.toLocaleString()}</td>
-                            <td>
-                              {repo.source.map((src, index) => (
-                                <div key={index} className="badge badge-accent badge-sm">
-                                  {src}
-                                </div>
-                              ))}
-                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -141,67 +133,38 @@ const Home: NextPage = () => {
                 </div>
               </div>
 
-              {/* Source Statistics */}
+              {/* Top Owners (moved here) */}
               <div className="card bg-base-100 shadow-xl">
                 <div className="card-body">
                   <h2 className="card-title">
-                    <ChartBarIcon className="h-6 w-6" />
-                    Repositories by Source
+                    <MagnifyingGlassIcon className="h-6 w-6" />
+                    Top Repository Owners
                   </h2>
-                  <div className="space-y-4">
-                    {stats.sourceStats.map(source => (
-                      <div key={source.source} className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className="badge badge-primary">{source.source}</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-2xl font-bold">{source.count.toLocaleString()}</div>
-                          <div className="text-sm opacity-50">
-                            {((source.count / stats.totalRepos) * 100).toFixed(1)}%
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Top Owners */}
-            <div className="card bg-base-100 shadow-xl mt-8">
-              <div className="card-body">
-                <h2 className="card-title">
-                  <MagnifyingGlassIcon className="h-6 w-6" />
-                  Top Repository Owners
-                </h2>
-                <div className="overflow-x-auto">
-                  <table className="table table-zebra w-full">
-                    <thead>
-                      <tr>
-                        <th>Owner</th>
-                        <th>Repositories</th>
-                        <th>Total Stars</th>
-                        <th>Avg Stars/Repo</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {stats.topOwners.map((owner, index) => (
-                        <tr key={owner.owner}>
-                          <td>
-                            <div className="flex items-center space-x-3">
-                              <div className="font-bold">{index + 1}</div>
-                              <div className="font-bold">{owner.owner}</div>
-                            </div>
-                          </td>
-                          <td>{owner.repo_count.toLocaleString()}</td>
-                          <td>{parseInt(owner.total_stars.toString()).toLocaleString()}</td>
-                          <td>
-                            {Math.round(parseInt(owner.total_stars.toString()) / owner.repo_count).toLocaleString()}
-                          </td>
+                  <div className="overflow-x-auto">
+                    <table className="table table-zebra w-full">
+                      <thead>
+                        <tr>
+                          <th>Owner</th>
+                          <th>Repositories</th>
+                          <th>Total Stars</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {stats.topOwners.map((owner, index) => (
+                          <tr key={owner.owner} className="h-16">
+                            <td>
+                              <div className="flex items-center space-x-3">
+                                <div className="font-bold">{index + 1}</div>
+                                <div className="font-bold">{owner.owner}</div>
+                              </div>
+                            </td>
+                            <td>{owner.repo_count.toLocaleString()}</td>
+                            <td>{parseInt(owner.total_stars.toString()).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
