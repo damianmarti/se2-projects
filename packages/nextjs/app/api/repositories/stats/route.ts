@@ -11,13 +11,22 @@ export async function GET() {
 
     try {
       // Get total repositories count
-      const totalReposResult = await client.query("SELECT COUNT(*) as count FROM repositories");
+      const totalReposResult = await client.query(
+        "SELECT COUNT(*) as count FROM repositories WHERE deleted_at IS NULL",
+      );
       const totalRepos = parseInt(totalReposResult.rows[0].count);
+
+      // Get deleted repositories count
+      const deletedReposResult = await client.query(
+        "SELECT COUNT(*) as count FROM repositories WHERE deleted_at IS NOT NULL",
+      );
+      const deletedRepos = parseInt(deletedReposResult.rows[0].count);
 
       // Get repositories by source
       const sourceStatsResult = await client.query(`
         SELECT unnest(source) as source, COUNT(*) as count
         FROM repositories
+        WHERE deleted_at IS NULL
         GROUP BY unnest(source)
         ORDER BY count DESC
       `);
@@ -27,6 +36,7 @@ export async function GET() {
       const topStarsResult = await client.query(`
         SELECT full_name, name, owner, stars, forks, url, source
         FROM repositories
+        WHERE deleted_at IS NULL
         ORDER BY stars DESC
         LIMIT 10
       `);
@@ -36,7 +46,7 @@ export async function GET() {
       const recentReposResult = await client.query(`
         SELECT COUNT(*) as count
         FROM repositories
-        WHERE created_at >= NOW() - INTERVAL '7 days'
+        WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '7 days'
       `);
       const recentRepos = parseInt(recentReposResult.rows[0].count);
 
@@ -46,6 +56,7 @@ export async function GET() {
           SUM(stars) as total_stars,
           SUM(forks) as total_forks
         FROM repositories
+        WHERE deleted_at IS NULL
       `);
       const totals = totalsResult.rows[0];
 
@@ -53,6 +64,7 @@ export async function GET() {
       const topOwnersResult = await client.query(`
         SELECT owner, COUNT(*) as repo_count, SUM(stars) as total_stars
         FROM repositories
+        WHERE deleted_at IS NULL
         GROUP BY owner
         ORDER BY repo_count DESC
         LIMIT 10
@@ -61,6 +73,7 @@ export async function GET() {
 
       return NextResponse.json({
         totalRepos,
+        deletedRepos,
         sourceStats,
         topStars,
         recentRepos,

@@ -17,6 +17,7 @@ export async function GET() {
         id, full_name, name, owner, url, homepage, stars, forks,
         created_at, updated_at, last_seen, saved_at, source
       FROM repositories
+      WHERE deleted_at IS NULL
       ORDER BY id
     `);
 

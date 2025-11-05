@@ -29,8 +29,10 @@ export async function GET(request: NextRequest) {
       const queryParams: any[] = [];
 
       if (search) {
-        whereClause = "WHERE (full_name ILIKE $1 OR name ILIKE $1 OR owner ILIKE $1)";
+        whereClause = "WHERE (full_name ILIKE $1 OR name ILIKE $1 OR owner ILIKE $1) AND deleted_at IS NULL";
         queryParams.push(`%${search}%`);
+      } else {
+        whereClause = "WHERE deleted_at IS NULL";
       }
 
       // Get total count for pagination
@@ -49,7 +51,7 @@ export async function GET(request: NextRequest) {
             id, full_name, name, owner, url, homepage, stars, forks,
             created_at, updated_at, last_seen, saved_at, source
           FROM repositories
-          WHERE (full_name ILIKE $1 OR name ILIKE $1 OR owner ILIKE $1)
+          WHERE (full_name ILIKE $1 OR name ILIKE $1 OR owner ILIKE $1) AND deleted_at IS NULL
           ORDER BY ${validSortBy} ${validSortOrder} NULLS LAST
           LIMIT $2 OFFSET $3
         `;
@@ -61,6 +63,7 @@ export async function GET(request: NextRequest) {
             id, full_name, name, owner, url, homepage, stars, forks,
             created_at, updated_at, last_seen, saved_at, source
           FROM repositories
+          WHERE deleted_at IS NULL
           ORDER BY ${validSortBy} ${validSortOrder} NULLS LAST
           LIMIT $1 OFFSET $2
         `;
