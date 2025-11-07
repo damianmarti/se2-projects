@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowDownTrayIcon, ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowDownTrayIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  GlobeAltIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
 import { Repository } from "~~/types/repository";
 
 interface RepositoriesResponse {
@@ -221,7 +227,6 @@ const RepositoriesPage = () => {
                       <SortIcon field="forks" />
                     </button>
                   </th>
-                  <th>Homepage</th>
                   <th>
                     <button
                       className="btn btn-ghost btn-sm flex items-center gap-2"
@@ -240,6 +245,7 @@ const RepositoriesPage = () => {
                       <SortIcon field="last_seen" />
                     </button>
                   </th>
+                  <th className="w-12"></th>
                 </tr>
               </thead>
               <tbody>
@@ -276,35 +282,23 @@ const RepositoriesPage = () => {
                       <div className="font-semibold text-base-content">{repo.forks.toLocaleString()}</div>
                     </td>
                     <td>
-                      {repo.homepage ? (
-                        <div className="flex items-center space-x-2">
-                          <a
-                            href={repo.homepage}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="link link-primary text-sm hover:link-hover flex items-center space-x-1"
-                            title={`Visit ${repo.homepage}`}
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                              />
-                            </svg>
-                            <span className="truncate max-w-32">{repo.homepage}</span>
-                          </a>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-gray-400 italic">No homepage</span>
-                      )}
-                    </td>
-                    <td>
                       <div className="text-sm text-base-content">{new Date(repo.created_at).toLocaleDateString()}</div>
                     </td>
                     <td>
                       <div className="text-sm text-base-content">{new Date(repo.last_seen).toLocaleDateString()}</div>
+                    </td>
+                    <td>
+                      {repo.homepage && (
+                        <a
+                          href={repo.homepage}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center p-2"
+                          title={`Visit ${repo.homepage}`}
+                        >
+                          <GlobeAltIcon className="h-5 w-5 text-base-content/70 hover:text-primary transition-colors" />
+                        </a>
+                      )}
                     </td>
                   </tr>
                 ))}
