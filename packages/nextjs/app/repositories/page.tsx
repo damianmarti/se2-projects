@@ -193,14 +193,14 @@ const RepositoriesPage = () => {
           <div className="overflow-x-auto">
             <table className="table table-zebra w-full">
               <thead>
-                <tr>
-                  <th>
+                <tr className="border-b-2 border-base-300">
+                  <th className="border-r border-base-300/50 last:border-r-0">
                     <button className="btn btn-ghost btn-sm flex items-center gap-2" onClick={() => handleSort("name")}>
                       Repository
                       <SortIcon field="name" />
                     </button>
                   </th>
-                  <th>
+                  <th className="border-r border-base-300/50 last:border-r-0">
                     <button
                       className="btn btn-ghost btn-sm flex items-center gap-2"
                       onClick={() => handleSort("owner")}
@@ -209,7 +209,7 @@ const RepositoriesPage = () => {
                       <SortIcon field="owner" />
                     </button>
                   </th>
-                  <th>
+                  <th className="border-r border-base-300/50 last:border-r-0">
                     <button
                       className="btn btn-ghost btn-sm flex items-center gap-2"
                       onClick={() => handleSort("stars")}
@@ -218,7 +218,7 @@ const RepositoriesPage = () => {
                       <SortIcon field="stars" />
                     </button>
                   </th>
-                  <th>
+                  <th className="border-r border-base-300/50 last:border-r-0">
                     <button
                       className="btn btn-ghost btn-sm flex items-center gap-2"
                       onClick={() => handleSort("forks")}
@@ -227,7 +227,7 @@ const RepositoriesPage = () => {
                       <SortIcon field="forks" />
                     </button>
                   </th>
-                  <th>
+                  <th className="border-r border-base-300/50 last:border-r-0">
                     <button
                       className="btn btn-ghost btn-sm flex items-center gap-2"
                       onClick={() => handleSort("created_at")}
@@ -236,7 +236,7 @@ const RepositoriesPage = () => {
                       <SortIcon field="created_at" />
                     </button>
                   </th>
-                  <th>
+                  <th className="border-r border-base-300/50 last:border-r-0">
                     <button
                       className="btn btn-ghost btn-sm flex items-center gap-2"
                       onClick={() => handleSort("last_seen")}
@@ -250,8 +250,8 @@ const RepositoriesPage = () => {
               </thead>
               <tbody>
                 {data.repositories.map(repo => (
-                  <tr key={repo.id}>
-                    <td>
+                  <tr key={repo.id} className="border-b border-base-300/50">
+                    <td className="border-r border-base-300/50 last:border-r-0">
                       <div className="flex items-center space-x-3">
                         <div>
                           <div className="font-bold">
@@ -259,7 +259,7 @@ const RepositoriesPage = () => {
                               href={repo.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="link link-primary hover:link-hover flex items-center space-x-1"
+                              className="link text-base-content hover:text-primary flex items-center space-x-1 transition-colors"
                               title={`View ${repo.full_name} on GitHub`}
                             >
                               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -272,19 +272,19 @@ const RepositoriesPage = () => {
                         </div>
                       </div>
                     </td>
-                    <td>
+                    <td className="border-r border-base-300/50 last:border-r-0">
                       <div className="font-medium text-base-content">{repo.owner}</div>
                     </td>
-                    <td>
+                    <td className="border-r border-base-300/50 last:border-r-0">
                       <div className="font-semibold text-base-content">{repo.stars.toLocaleString()}</div>
                     </td>
-                    <td>
+                    <td className="border-r border-base-300/50 last:border-r-0">
                       <div className="font-semibold text-base-content">{repo.forks.toLocaleString()}</div>
                     </td>
-                    <td>
+                    <td className="border-r border-base-300/50 last:border-r-0">
                       <div className="text-sm text-base-content">{new Date(repo.created_at).toLocaleDateString()}</div>
                     </td>
-                    <td>
+                    <td className="border-r border-base-300/50 last:border-r-0">
                       <div className="text-sm text-base-content">{new Date(repo.last_seen).toLocaleDateString()}</div>
                     </td>
                     <td>
