@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowDownTrayIcon, ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Repository } from "~~/types/repository";
 
@@ -24,11 +24,14 @@ interface RepositoriesResponse {
 const RepositoriesPage = () => {
   const [data, setData] = useState<RepositoriesResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("id");
   const [sortOrder, setSortOrder] = useState("desc");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchRepositories = async () => {
     setLoading(true);
@@ -38,7 +41,7 @@ const RepositoriesPage = () => {
         limit: "30",
         sortBy,
         sortOrder,
-        ...(search && { search }),
+        ...(debouncedSearch && { search: debouncedSearch }),
       });
 
       const response = await fetch(`/api/repositories?${params}`);
@@ -47,6 +50,7 @@ const RepositoriesPage = () => {
       }
       const result = await response.json();
       setData(result);
+      setIsInitialLoad(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -54,10 +58,28 @@ const RepositoriesPage = () => {
     }
   };
 
+  // Debounce search input
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 400);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [search]);
+
   useEffect(() => {
     fetchRepositories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, sortBy, sortOrder, search]);
+  }, [currentPage, sortBy, sortOrder, debouncedSearch]);
 
   const handleSort = (field: string) => {
     if (sortBy === field) {
@@ -71,7 +93,6 @@ const RepositoriesPage = () => {
 
   const handleSearch = (value: string) => {
     setSearch(value);
-    setCurrentPage(1);
   };
 
   const handleExport = async () => {
@@ -130,38 +151,38 @@ const RepositoriesPage = () => {
         </div>
 
         {/* Search */}
-        <div className="form-control max-w-md">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search repositories..."
-              className="input input-bordered w-full pr-10"
-              value={search}
-              onChange={e => handleSearch(e.target.value)}
-            />
-            <MagnifyingGlassIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        <div className="flex items-center gap-4">
+          <div className="form-control max-w-md flex-1">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search repositories..."
+                className="input input-bordered w-full pr-10"
+                value={search}
+                onChange={e => handleSearch(e.target.value)}
+              />
+              {loading && !isInitialLoad ? (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="loading loading-spinner loading-sm"></div>
+                </div>
+              ) : (
+                <MagnifyingGlassIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              )}
+            </div>
           </div>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="stats shadow mb-6">
-        <div className="stat">
-          <div className="stat-title">Total Repositories</div>
-          <div className="stat-value text-primary">{data.pagination.totalCount.toLocaleString()}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-title">Current Page</div>
-          <div className="stat-value text-secondary">{data.pagination.currentPage}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-title">Total Pages</div>
-          <div className="stat-value text-accent">{data.pagination.totalPages}</div>
+          {data && (
+            <div className="text-sm text-base-content/70 whitespace-nowrap">
+              {data.pagination.totalCount.toLocaleString()}{" "}
+              {data.pagination.totalCount === 1 ? "repository" : "repositories"} found
+            </div>
+          )}
         </div>
       </div>
 
       {/* Table */}
-      <div className="card bg-base-100 shadow-xl">
+      <div
+        className={`card bg-base-100 shadow-xl transition-opacity ${loading && !isInitialLoad ? "opacity-60" : "opacity-100"}`}
+      >
         <div className="card-body p-0">
           <div className="overflow-x-auto">
             <table className="table table-zebra w-full">
@@ -334,8 +355,8 @@ const RepositoriesPage = () => {
         </div>
       </div>
 
-      {/* Loading overlay */}
-      {loading && (
+      {/* Loading overlay - only show on initial load */}
+      {loading && isInitialLoad && (
         <div className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50">
           <div className="bg-base-100 rounded-lg p-4 shadow-lg">
             <div className="loading loading-spinner loading-md"></div>
