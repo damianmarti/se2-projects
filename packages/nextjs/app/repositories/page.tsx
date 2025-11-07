@@ -262,18 +262,18 @@ const RepositoriesPage = () => {
                               <span>{repo.name}</span>
                             </a>
                           </div>
-                          <div className="text-sm opacity-50">{repo.full_name}</div>
+                          <div className="text-sm text-base-content/60">{repo.full_name}</div>
                         </div>
                       </div>
                     </td>
                     <td>
-                      <div className="font-medium">{repo.owner}</div>
+                      <div className="font-medium text-base-content">{repo.owner}</div>
                     </td>
                     <td>
-                      <div className="badge badge-primary badge-outline">{repo.stars.toLocaleString()}</div>
+                      <div className="font-semibold text-base-content">{repo.stars.toLocaleString()}</div>
                     </td>
                     <td>
-                      <div className="badge badge-primary badge-outline">{repo.forks.toLocaleString()}</div>
+                      <div className="font-semibold text-base-content">{repo.forks.toLocaleString()}</div>
                     </td>
                     <td>
                       {repo.homepage ? (
@@ -301,10 +301,10 @@ const RepositoriesPage = () => {
                       )}
                     </td>
                     <td>
-                      <div className="text-sm">{new Date(repo.created_at).toLocaleDateString()}</div>
+                      <div className="text-sm text-base-content">{new Date(repo.created_at).toLocaleDateString()}</div>
                     </td>
                     <td>
-                      <div className="text-sm">{new Date(repo.last_seen).toLocaleDateString()}</div>
+                      <div className="text-sm text-base-content">{new Date(repo.last_seen).toLocaleDateString()}</div>
                     </td>
                   </tr>
                 ))}
