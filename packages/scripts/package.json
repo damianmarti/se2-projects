@@ -7,7 +7,6 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "scrape": "tsx src/scrape-dependents.ts",
     "dependents-api": "tsx src/fetch-dependents-api.ts",
-    "dependents-gql": "tsx src/fetch-dependents-graphql.ts",
     "search-filename": "tsx src/search-by-filename.ts",
     "import-csv": "tsx src/import-se2builds-csv.ts",
     "search-initial-commits": "tsx src/search-initial-commits.ts",
