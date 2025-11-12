@@ -50,6 +50,27 @@ export async function GET() {
       `);
       const recentRepos = parseInt(recentReposResult.rows[0].count);
 
+      // Get repositories saved in last 7 days
+      const recentSavedReposResult = await client.query(`
+        SELECT COUNT(*) as count
+        FROM repositories
+        WHERE deleted_at IS NULL AND saved_at >= NOW() - INTERVAL '7 days'
+      `);
+      const recentSavedRepos = parseInt(recentSavedReposResult.rows[0].count);
+
+      // Get daily saved counts for last 30 days
+      const savedByDateResult = await client.query(`
+        SELECT saved_at::date as date, COUNT(*) as count
+        FROM repositories
+        WHERE saved_at >= NOW() - INTERVAL '30 days'
+        GROUP BY saved_at::date
+        ORDER BY saved_at::date DESC
+      `);
+      const savedByDate = savedByDateResult.rows.map(row => ({
+        date: row.date,
+        count: parseInt(row.count),
+      }));
+
       // Get total stars and forks
       const totalsResult = await client.query(`
         SELECT
@@ -77,6 +98,8 @@ export async function GET() {
         sourceStats,
         topStars,
         recentRepos,
+        recentSavedRepos,
+        savedByDate,
         totals: {
           totalStars: parseInt(totals.total_stars) || 0,
           totalForks: parseInt(totals.total_forks) || 0,
