@@ -26,7 +26,7 @@ const RepositoriesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortBy, setSortBy] = useState("id");
+  const [sortBy, setSortBy] = useState("stars");
   const [sortOrder, setSortOrder] = useState("desc");
   const [search, setSearch] = useState("");
 
