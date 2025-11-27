@@ -1,7 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ArrowDownTrayIcon, ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { useEffect, useRef, useState } from "react";
+import {
+  ArrowDownTrayIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  GlobeAltIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
 import { Repository } from "~~/types/repository";
 
 interface RepositoriesResponse {
@@ -24,11 +30,14 @@ interface RepositoriesResponse {
 const RepositoriesPage = () => {
   const [data, setData] = useState<RepositoriesResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("stars");
   const [sortOrder, setSortOrder] = useState("desc");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchRepositories = async () => {
     setLoading(true);
@@ -38,7 +47,7 @@ const RepositoriesPage = () => {
         limit: "30",
         sortBy,
         sortOrder,
-        ...(search && { search }),
+        ...(debouncedSearch && { search: debouncedSearch }),
       });
 
       const response = await fetch(`/api/repositories?${params}`);
@@ -47,6 +56,7 @@ const RepositoriesPage = () => {
       }
       const result = await response.json();
       setData(result);
+      setIsInitialLoad(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -54,10 +64,28 @@ const RepositoriesPage = () => {
     }
   };
 
+  // Debounce search input
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 400);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [search]);
+
   useEffect(() => {
     fetchRepositories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, sortBy, sortOrder, search]);
+  }, [currentPage, sortBy, sortOrder, debouncedSearch]);
 
   const handleSort = (field: string) => {
     if (sortBy === field) {
@@ -71,7 +99,6 @@ const RepositoriesPage = () => {
 
   const handleSearch = (value: string) => {
     setSearch(value);
-    setCurrentPage(1);
   };
 
   const handleExport = async () => {
@@ -130,50 +157,50 @@ const RepositoriesPage = () => {
         </div>
 
         {/* Search */}
-        <div className="form-control max-w-md">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search repositories..."
-              className="input input-bordered w-full pr-10"
-              value={search}
-              onChange={e => handleSearch(e.target.value)}
-            />
-            <MagnifyingGlassIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        <div className="flex items-center gap-4">
+          <div className="form-control max-w-md flex-1">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search repositories..."
+                className="input input-bordered w-full pr-10"
+                value={search}
+                onChange={e => handleSearch(e.target.value)}
+              />
+              {loading && !isInitialLoad ? (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="loading loading-spinner loading-sm"></div>
+                </div>
+              ) : (
+                <MagnifyingGlassIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              )}
+            </div>
           </div>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="stats shadow mb-6">
-        <div className="stat">
-          <div className="stat-title">Total Repositories</div>
-          <div className="stat-value text-primary">{data.pagination.totalCount.toLocaleString()}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-title">Current Page</div>
-          <div className="stat-value text-secondary">{data.pagination.currentPage}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-title">Total Pages</div>
-          <div className="stat-value text-accent">{data.pagination.totalPages}</div>
+          {data && (
+            <div className="text-sm text-base-content/70 whitespace-nowrap">
+              {data.pagination.totalCount.toLocaleString()}{" "}
+              {data.pagination.totalCount === 1 ? "repository" : "repositories"} found
+            </div>
+          )}
         </div>
       </div>
 
       {/* Table */}
-      <div className="card bg-base-100 shadow-xl">
+      <div
+        className={`card bg-base-100 shadow-xl transition-opacity ${loading && !isInitialLoad ? "opacity-60" : "opacity-100"}`}
+      >
         <div className="card-body p-0">
           <div className="overflow-x-auto">
             <table className="table table-zebra w-full">
               <thead>
-                <tr>
-                  <th>
+                <tr className="border-b-2 border-base-300">
+                  <th className="border-r border-base-300/50 last:border-r-0">
                     <button className="btn btn-ghost btn-sm flex items-center gap-2" onClick={() => handleSort("name")}>
                       Repository
                       <SortIcon field="name" />
                     </button>
                   </th>
-                  <th>
+                  <th className="border-r border-base-300/50 last:border-r-0">
                     <button
                       className="btn btn-ghost btn-sm flex items-center gap-2"
                       onClick={() => handleSort("owner")}
@@ -182,7 +209,7 @@ const RepositoriesPage = () => {
                       <SortIcon field="owner" />
                     </button>
                   </th>
-                  <th>
+                  <th className="border-r border-base-300/50 last:border-r-0">
                     <button
                       className="btn btn-ghost btn-sm flex items-center gap-2"
                       onClick={() => handleSort("stars")}
@@ -191,7 +218,7 @@ const RepositoriesPage = () => {
                       <SortIcon field="stars" />
                     </button>
                   </th>
-                  <th>
+                  <th className="border-r border-base-300/50 last:border-r-0">
                     <button
                       className="btn btn-ghost btn-sm flex items-center gap-2"
                       onClick={() => handleSort("forks")}
@@ -200,8 +227,7 @@ const RepositoriesPage = () => {
                       <SortIcon field="forks" />
                     </button>
                   </th>
-                  <th>Homepage</th>
-                  <th>
+                  <th className="border-r border-base-300/50 last:border-r-0">
                     <button
                       className="btn btn-ghost btn-sm flex items-center gap-2"
                       onClick={() => handleSort("created_at")}
@@ -210,7 +236,7 @@ const RepositoriesPage = () => {
                       <SortIcon field="created_at" />
                     </button>
                   </th>
-                  <th>
+                  <th className="border-r border-base-300/50 last:border-r-0">
                     <button
                       className="btn btn-ghost btn-sm flex items-center gap-2"
                       onClick={() => handleSort("last_seen")}
@@ -219,12 +245,13 @@ const RepositoriesPage = () => {
                       <SortIcon field="last_seen" />
                     </button>
                   </th>
+                  <th className="w-12"></th>
                 </tr>
               </thead>
               <tbody>
                 {data.repositories.map(repo => (
-                  <tr key={repo.id}>
-                    <td>
+                  <tr key={repo.id} className="border-b border-base-300/50">
+                    <td className="border-r border-base-300/50 last:border-r-0">
                       <div className="flex items-center space-x-3">
                         <div>
                           <div className="font-bold">
@@ -232,7 +259,7 @@ const RepositoriesPage = () => {
                               href={repo.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="link link-primary hover:link-hover flex items-center space-x-1"
+                              className="link text-base-content hover:text-primary flex items-center space-x-1 transition-colors"
                               title={`View ${repo.full_name} on GitHub`}
                             >
                               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -241,49 +268,37 @@ const RepositoriesPage = () => {
                               <span>{repo.name}</span>
                             </a>
                           </div>
-                          <div className="text-sm opacity-50">{repo.full_name}</div>
+                          <div className="text-sm text-base-content/60">{repo.full_name}</div>
                         </div>
                       </div>
                     </td>
-                    <td>
-                      <div className="font-medium">{repo.owner}</div>
+                    <td className="border-r border-base-300/50 last:border-r-0">
+                      <div className="font-medium text-base-content">{repo.owner}</div>
+                    </td>
+                    <td className="border-r border-base-300/50 last:border-r-0">
+                      <div className="font-semibold text-base-content">{repo.stars.toLocaleString()}</div>
+                    </td>
+                    <td className="border-r border-base-300/50 last:border-r-0">
+                      <div className="font-semibold text-base-content">{repo.forks.toLocaleString()}</div>
+                    </td>
+                    <td className="border-r border-base-300/50 last:border-r-0">
+                      <div className="text-sm text-base-content">{new Date(repo.created_at).toLocaleDateString()}</div>
+                    </td>
+                    <td className="border-r border-base-300/50 last:border-r-0">
+                      <div className="text-sm text-base-content">{new Date(repo.last_seen).toLocaleDateString()}</div>
                     </td>
                     <td>
-                      <div className="badge badge-primary badge-outline">{repo.stars.toLocaleString()}</div>
-                    </td>
-                    <td>
-                      <div className="badge badge-primary badge-outline">{repo.forks.toLocaleString()}</div>
-                    </td>
-                    <td>
-                      {repo.homepage ? (
-                        <div className="flex items-center space-x-2">
-                          <a
-                            href={repo.homepage}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="link link-primary text-sm hover:link-hover flex items-center space-x-1"
-                            title={`Visit ${repo.homepage}`}
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                              />
-                            </svg>
-                            <span className="truncate max-w-32">{repo.homepage}</span>
-                          </a>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-gray-400 italic">No homepage</span>
+                      {repo.homepage && (
+                        <a
+                          href={repo.homepage}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center p-2"
+                          title={`Visit ${repo.homepage}`}
+                        >
+                          <GlobeAltIcon className="h-5 w-5 text-base-content/70 hover:text-primary transition-colors" />
+                        </a>
                       )}
-                    </td>
-                    <td>
-                      <div className="text-sm">{new Date(repo.created_at).toLocaleDateString()}</div>
-                    </td>
-                    <td>
-                      <div className="text-sm">{new Date(repo.last_seen).toLocaleDateString()}</div>
                     </td>
                   </tr>
                 ))}
@@ -334,8 +349,8 @@ const RepositoriesPage = () => {
         </div>
       </div>
 
-      {/* Loading overlay */}
-      {loading && (
+      {/* Loading overlay - only show on initial load */}
+      {loading && isInitialLoad && (
         <div className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50">
           <div className="bg-base-100 rounded-lg p-4 shadow-lg">
             <div className="loading loading-spinner loading-md"></div>

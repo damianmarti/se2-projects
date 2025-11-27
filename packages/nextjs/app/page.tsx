@@ -65,32 +65,32 @@ const Home: NextPage = () => {
                 <div className="stat-figure text-primary">
                   <CodeBracketIcon className="h-8 w-8" />
                 </div>
-                <div className="stat-title">Total Repositories</div>
-                <div className="stat-value text-primary">{stats.totalRepos.toLocaleString()}</div>
+                <div className="stat-title text-base-content/70">Total Repositories</div>
+                <div className="stat-value text-base-content font-bold">{stats.totalRepos.toLocaleString()}</div>
               </div>
 
               <div className="stat bg-base-100 rounded-lg shadow">
-                <div className="stat-figure text-secondary">
+                <div className="stat-figure text-primary">
                   <StarIcon className="h-8 w-8" />
                 </div>
-                <div className="stat-title">Total Stars</div>
-                <div className="stat-value text-primary">{stats.totals.totalStars.toLocaleString()}</div>
+                <div className="stat-title text-base-content/70">Total Stars</div>
+                <div className="stat-value text-base-content font-bold">{stats.totals.totalStars.toLocaleString()}</div>
               </div>
 
               <div className="stat bg-base-100 rounded-lg shadow">
-                <div className="stat-figure text-accent">
+                <div className="stat-figure text-primary">
                   <ChartBarIcon className="h-8 w-8" />
                 </div>
-                <div className="stat-title">Total Forks</div>
-                <div className="stat-value text-accent">{stats.totals.totalForks.toLocaleString()}</div>
+                <div className="stat-title text-base-content/70">Total Forks</div>
+                <div className="stat-value text-base-content font-bold">{stats.totals.totalForks.toLocaleString()}</div>
               </div>
 
               <div className="stat bg-base-100 rounded-lg shadow">
-                <div className="stat-figure text-info">
+                <div className="stat-figure text-primary">
                   <BugAntIcon className="h-8 w-8" />
                 </div>
-                <div className="stat-title">Recent (7 days)</div>
-                <div className="stat-value text-info">{stats.recentRepos.toLocaleString()}</div>
+                <div className="stat-title text-base-content/70">Recent (7 days)</div>
+                <div className="stat-value text-base-content font-bold">{stats.recentRepos.toLocaleString()}</div>
               </div>
             </div>
 
@@ -116,15 +116,19 @@ const Home: NextPage = () => {
                           <tr key={repo.full_name} className="h-16">
                             <td className="py-2">
                               <div className="flex items-center space-x-3">
-                                <div className="font-bold">{index + 1}</div>
+                                <div className="font-bold text-base-content/60">{index + 1}</div>
                                 <div>
-                                  <div className="font-bold">{repo.name}</div>
-                                  <div className="text-sm opacity-50">{repo.owner}</div>
+                                  <div className="font-bold text-base-content">{repo.name}</div>
+                                  <div className="text-sm text-base-content/60">{repo.owner}</div>
                                 </div>
                               </div>
                             </td>
-                            <td>{repo.stars.toLocaleString()}</td>
-                            <td>{repo.forks.toLocaleString()}</td>
+                            <td>
+                              <span className="font-semibold text-base-content">{repo.stars.toLocaleString()}</span>
+                            </td>
+                            <td>
+                              <span className="font-semibold text-base-content">{repo.forks.toLocaleString()}</span>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -154,12 +158,20 @@ const Home: NextPage = () => {
                           <tr key={owner.owner} className="h-16">
                             <td>
                               <div className="flex items-center space-x-3">
-                                <div className="font-bold">{index + 1}</div>
-                                <div className="font-bold">{owner.owner}</div>
+                                <div className="font-bold text-base-content/60">{index + 1}</div>
+                                <div className="font-bold text-base-content">{owner.owner}</div>
                               </div>
                             </td>
-                            <td>{owner.repo_count.toLocaleString()}</td>
-                            <td>{parseInt(owner.total_stars.toString()).toLocaleString()}</td>
+                            <td>
+                              <span className="font-semibold text-base-content">
+                                {owner.repo_count.toLocaleString()}
+                              </span>
+                            </td>
+                            <td>
+                              <span className="font-semibold text-base-content">
+                                {parseInt(owner.total_stars.toString()).toLocaleString()}
+                              </span>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
