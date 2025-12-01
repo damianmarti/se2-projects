@@ -54,6 +54,7 @@ export interface GitHubRepoResponse {
   owner: { login: string };
   html_url: string;
   homepage?: string;
+  default_branch?: string;
   stargazers_count: number;
   forks_count: number;
   fork: boolean;

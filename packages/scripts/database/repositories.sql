@@ -5,6 +5,7 @@ CREATE TABLE repositories (
     owner VARCHAR(255) NOT NULL,
     url TEXT NOT NULL,
     homepage VARCHAR(255),
+    default_branch VARCHAR(255),
     stars INTEGER DEFAULT 0,
     forks INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE,
@@ -21,3 +22,7 @@ CREATE INDEX idx_repositories_forks ON repositories(forks DESC);
 CREATE INDEX idx_repositories_created_at ON repositories(created_at);
 CREATE INDEX idx_repositories_updated_at ON repositories(updated_at);
 CREATE INDEX idx_repositories_last_seen ON repositories(last_seen);
+
+-- Migration: Add default_branch column
+-- Run this if you have an existing table without the default_branch column
+-- ALTER TABLE repositories ADD COLUMN default_branch VARCHAR(255);

@@ -10,7 +10,8 @@
     "search-filename": "tsx src/search-by-filename.ts",
     "import-csv": "tsx src/import-se2builds-csv.ts",
     "search-initial-commits": "tsx src/search-initial-commits.ts",
-    "check-repo-online": "tsx src/check-repo-online.ts"
+    "check-repo-online": "tsx src/check-repo-online.ts",
+    "update-default-branch": "tsx src/update-default-branch.ts"
   },
   "kenwords": [],
   "author": "",
