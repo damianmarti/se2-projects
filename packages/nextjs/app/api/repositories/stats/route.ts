@@ -71,6 +71,20 @@ export async function GET() {
         count: parseInt(row.count),
       }));
 
+      // Get daily deleted counts for last 30 days
+      const deletedByDateResult = await client.query(`
+        SELECT deleted_at::date as date, COUNT(*) as count
+        FROM repositories
+        WHERE deleted_at IS NOT NULL
+          AND deleted_at >= NOW() - INTERVAL '30 days'
+        GROUP BY deleted_at::date
+        ORDER BY deleted_at::date DESC
+      `);
+      const deletedByDate = deletedByDateResult.rows.map(row => ({
+        date: row.date,
+        count: parseInt(row.count),
+      }));
+
       // Get total stars and forks
       const totalsResult = await client.query(`
         SELECT
@@ -100,6 +114,7 @@ export async function GET() {
         recentRepos,
         recentSavedRepos,
         savedByDate,
+        deletedByDate,
         totals: {
           totalStars: parseInt(totals.total_stars) || 0,
           totalForks: parseInt(totals.total_forks) || 0,
