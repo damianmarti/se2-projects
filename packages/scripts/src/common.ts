@@ -41,6 +41,7 @@ export interface RepositoryData {
   owner: string;
   url: string;
   homepage?: string;
+  default_branch?: string | null;
   stars: number;
   forks: number;
   created_at: string;
@@ -70,14 +71,15 @@ export async function delay(ms: number): Promise<void> {
 // Database functions
 export async function upsertRepository(repo: RepositoryData): Promise<void> {
   const query = `
-    INSERT INTO repositories (full_name, name, owner, url, homepage, stars, forks, created_at, updated_at, source, last_seen)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+    INSERT INTO repositories (full_name, name, owner, url, homepage, default_branch, stars, forks, created_at, updated_at, source, last_seen)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
     ON CONFLICT (full_name)
     DO UPDATE SET
       stars = EXCLUDED.stars,
       forks = EXCLUDED.forks,
       updated_at = EXCLUDED.updated_at,
       homepage = EXCLUDED.homepage,
+      default_branch = EXCLUDED.default_branch,
       source = ARRAY(SELECT DISTINCT unnest(repositories.source || EXCLUDED.source)),
       last_seen = NOW()
   `;
@@ -88,6 +90,7 @@ export async function upsertRepository(repo: RepositoryData): Promise<void> {
     repo.owner,
     repo.url,
     repo.homepage || null,
+    repo.default_branch || null,
     repo.stars,
     repo.forks,
     repo.created_at,
